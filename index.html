@@ -57,35 +57,37 @@
     </div>
 
     <script>
-        // Funkce pro hodiny
-        function updateClock() {
-            const now = new Date();
-            const time = now.getHours().toString().padStart(2, '0') + ":" + 
-                         now.getMinutes().toString().padStart(2, '0') + ":" + 
-                         now.getSeconds().toString().padStart(2, '0');
-            document.getElementById('clock').innerText = time;
-        }
-        setInterval(updateClock, 1000);
-        updateClock();
-
-        // Reakce na příkazy
-        const input = document.getElementById('commandInput');
-        const output = document.getElementById('output');
-
-        input.addEventListener('keypress', function (e) {
+                input.addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
-                const cmd = input.value.toLowerCase();
-                if (cmd === 'hello') {
-                    output.innerText = "Zdravím, Mistře. Jsem připraven.";
-                } else if (cmd === 'time') {
-                    output.innerText = "Čas je jen iluze, ale můj procesor běží přesně.";
+                const cmd = input.value.toLowerCase().trim();
+                let response = "";
+
+                if (cmd === 'hello' || cmd === 'ahoj') {
+                    response = "Zdravím. Systém je plně funkční.";
+                } else if (cmd === 'time' || cmd === 'cas') {
+                    const now = new Date();
+                    response = "Aktuální čas systému: " + now.toLocaleTimeString();
+                } else if (cmd === 'vtip') {
+                    const vtipy = [
+                        "Proč se programátoři neradi opalují? Protože mají strach z bugů.",
+                        "Hardware je to, do čeho můžete kopnout, když nefunguje software.",
+                        "Existuje 10 druhů lidí: ti, kteří rozumí dvojkové soustavě, a ti, kteří ne."
+                    ];
+                    response = vtipy[Math.floor(Math.random() * vtipy.length)];
+                } else if (cmd === 'clear') {
+                    output.innerText = "Čekám na instrukce...";
+                    input.value = '';
+                    return;
+                } else if (cmd === 'status') {
+                    response = "CPU: Stabilní | Jádro: Online | Připojení: Šifrováno";
                 } else {
-                    output.innerText = "Příkaz '" + cmd + "' nebyl rozpoznán.";
+                    response = "Příkaz '" + cmd + "' nebyl rozpoznán v databázi.";
                 }
+
+                output.innerText = response;
                 input.value = '';
             }
         });
     </script>
 </body>
-</html>
-
+</ht
