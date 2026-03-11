@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Johnny System v2.1</title>
+    <title>Johnny System v3.0 - Memory</title>
     <style>
         body {
             background-color: #000;
@@ -25,29 +25,13 @@
             width: 90%;
             max-width: 500px;
         }
-        #clock {
-            font-size: 1.8em;
-            margin-bottom: 10px;
-            text-align: center;
-        }
-        #output {
-            height: 100px;
-            overflow-y: auto;
-            margin-bottom: 10px;
-            border-bottom: 1px solid #030;
-        }
-        .input-line {
-            display: flex;
-        }
+        #clock { font-size: 1.8em; margin-bottom: 10px; text-align: center; }
+        #output { height: 120px; overflow-y: auto; margin-bottom: 10px; border-bottom: 1px solid #030; }
+        .input-line { display: flex; }
         .prompt { margin-right: 10px; }
         input {
-            background: transparent;
-            border: none;
-            color: #0f0;
-            font-family: inherit;
-            font-size: 1em;
-            outline: none;
-            width: 100%;
+            background: transparent; border: none; color: #0f0;
+            font-family: inherit; font-size: 1em; outline: none; width: 100%;
         }
     </style>
 </head>
@@ -55,9 +39,9 @@
 
     <div id="terminal">
         <div id="clock">00:00:00</div>
-        <div style="font-size: 0.7em; color: #0a0;">[ SYSTEM ONLINE - MISTR LOGGED IN ]</div>
+        <div id="user-status" style="font-size: 0.7em; color: #0a0;">[ SYSTÉM INICIALIZOVÁN ]</div>
         <hr style="border-color: #0f0;">
-        <div id="output">Čekám na příkaz (zkus 'hello', 'vtip' nebo 'cas')...</div>
+        <div id="output">Inicializace paměti...</div>
         <div class="input-line">
             <span class="prompt">></span>
             <input type="text" id="commandInput" autofocus autocomplete="off">
@@ -65,6 +49,10 @@
     </div>
 
     <script>
+        const input = document.getElementById('commandInput');
+        const output = document.getElementById('output');
+        const userStatus = document.getElementById('user-status');
+
         // Funkce pro hodiny
         function updateClock() {
             const now = new Date();
@@ -73,44 +61,60 @@
         setInterval(updateClock, 1000);
         updateClock();
 
-        // Logika terminálu
-        const input = document.getElementById('commandInput');
-        const output = document.getElementById('output');
+        // NAČTENÍ PAMĚTI (localStorage)
+        function checkMemory() {
+            const savedName = localStorage.getItem('johnny_username');
+            if (savedName) {
+                userStatus.innerText = "[ PŘIHLÁŠEN: " + savedName.toUpperCase() + " ]";
+                output.innerText = "Vítejte zpět, " + savedName + ". Systém je připraven.";
+            } else {
+                output.innerText = "Vítejte. Jak vás mám oslovovat? (Napište: jmenuji se [vaše jméno])";
+            }
+        }
+        checkMemory();
 
         input.addEventListener('keydown', function (e) {
             if (e.key === 'Enter') {
-                const cmd = input.value.toLowerCase().trim();
+                const rawCmd = input.value.trim();
+                const cmd = rawCmd.toLowerCase();
                 let response = "";
 
-                if (cmd === 'hello' || cmd === 'ahoj') {
-                    response = "Zdravím, Mistře. Systém je připraven k akci.";
-                } else if (cmd === 'cas' || cmd === 'time') {
+                if (cmd.startsWith('jmenuji se ')) {
+                    const name = rawCmd.split(' ').slice(2).join(' ');
+                    localStorage.setItem('johnny_username', name);
+                    userStatus.innerText = "[ PŘIHLÁŠEN: " + name.toUpperCase() + " ]";
+                    response = "Rozumím. Budu si pamatovat, že jste " + name + ".";
+                } else if (cmd === 'hello' || cmd === 'ahoj') {
+                    const name = localStorage.getItem('johnny_username') || "Mistře";
+                    response = "Zdravím vás, " + name + ". Všechny systémy běží na 100%.";
+                } else if (cmd === 'kdo jsem') {
+                    const name = localStorage.getItem('johnny_username');
+                    response = name ? "Jste " + name + ". Moje biometrická data nelžou." : "Zatím vás neznám. Představte se příkazem 'jmenuji se ...'.";
+                } else if (cmd === 'zapomen') {
+                    localStorage.removeItem('johnny_username');
+                    userStatus.innerText = "[ SYSTÉM RESETOVÁN ]";
+                    response = "Paměť vymazána. Kdo jste?";
+                } else if (cmd === 'cas') {
                     response = "Aktuální čas: " + new Date().toLocaleTimeString();
                 } else if (cmd === 'vtip') {
                     const vtipy = [
                         "Proč programátoři preferují tmavý režim? Protože světlo přitahuje bugy.",
-                        "Hardware je to, do čeho můžeš kopnout. Software je to, co můžeš jen proklínat.",
-                        "Uživatel: 'Můj počítač nefunguje.' IT: 'A zkusil jste ho vypnout a zapnout?'"
+                        "Hardware je to, do čeho můžeš kopnout. Software je to, co můžeš jen proklínat."
                     ];
                     response = vtipy[Math.floor(Math.random() * vtipy.length)];
-                } else if (cmd === 'status') {
-                    response = "CPU: 12% | RAM: Stabilní | Johnny: Vždy ve střehu.";
                 } else if (cmd === 'clear') {
                     output.innerText = "Terminál vyčištěn...";
                     input.value = '';
                     return;
-                } else if (cmd === "") {
-                    return;
                 } else {
-                    response = "Příkaz '" + cmd + "' neznám. Zkus 'hello'.";
+                    response = "Příkaz '" + cmd + "' neznám. Pro uložení jména zadej: jmenuji se [jméno]";
                 }
 
                 output.innerText = response;
-                input.value = ''; // Vymaže řádek po odeslání
+                input.value = '';
             }
         });
 
-        // Udržuje focus na inputu i po kliknutí jinam
         document.body.addEventListener('click', () => input.focus());
     </script>
 </body>
