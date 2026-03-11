@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Johnny System v2.0</title>
+    <style>
+        body {
+            background-color: #000;
+            color: #0f0;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+        #terminal {
+            border: 2px solid #0f0;
+            padding: 20px;
+            background: rgba(0, 20, 0, 0.9);
+            box-shadow: 0 0 20px #0f0;
+            width: 80%;
+            max-width: 500px;
+        }
+        #clock {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        .cursor {
+            animation: blink 1s infinite;
+        }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        input {
+            background: transparent;
+            border: none;
+            color: #0f0;
+            font-family: inherit;
+            font-size: 1.2em;
+            outline: none;
+            width: 100%;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="terminal">
+        <div id="clock">00:00:00</div>
+        <div>[ STATUS: ONLINE ]</div>
+        <div>[ USER: MISTR ]</div>
+        <hr style="border-color: #0f0;">
+        <div id="output">Čekám na instrukce...</div>
+        <div>> <input type="text" id="commandInput" placeholder="Zadej příkaz..." autofocus></div>
+    </div>
+
+    <script>
+        // Funkce pro hodiny
+        function updateClock() {
+            const now = new Date();
+            const time = now.getHours().toString().padStart(2, '0') + ":" + 
+                         now.getMinutes().toString().padStart(2, '0') + ":" + 
+                         now.getSeconds().toString().padStart(2, '0');
+            document.getElementById('clock').innerText = time;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Reakce na příkazy
+        const input = document.getElementById('commandInput');
+        const output = document.getElementById('output');
+
+        input.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                const cmd = input.value.toLowerCase();
+                if (cmd === 'hello') {
+                    output.innerText = "Zdravím, Mistře. Jsem připraven.";
+                } else if (cmd === 'time') {
+                    output.innerText = "Čas je jen iluze, ale můj procesor běží přesně.";
+                } else {
+                    output.innerText = "Příkaz '" + cmd + "' nebyl rozpoznán.";
+                }
+                input.value = '';
+            }
+        });
+    </script>
+</body>
+</html>
+
