@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Johnny System v2.0</title>
+    <title>Johnny System v2.1</title>
     <style>
         body {
             background-color: #000;
@@ -22,26 +22,32 @@
             padding: 20px;
             background: rgba(0, 20, 0, 0.9);
             box-shadow: 0 0 20px #0f0;
-            width: 80%;
+            width: 90%;
             max-width: 500px;
         }
         #clock {
-            font-size: 2em;
+            font-size: 1.8em;
             margin-bottom: 10px;
+            text-align: center;
         }
-        .cursor {
-            animation: blink 1s infinite;
+        #output {
+            height: 100px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #030;
         }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        .input-line {
+            display: flex;
+        }
+        .prompt { margin-right: 10px; }
         input {
             background: transparent;
             border: none;
             color: #0f0;
             font-family: inherit;
-            font-size: 1.2em;
+            font-size: 1em;
             outline: none;
             width: 100%;
-            margin-top: 15px;
         }
     </style>
 </head>
@@ -49,45 +55,63 @@
 
     <div id="terminal">
         <div id="clock">00:00:00</div>
-        <div>[ STATUS: ONLINE ]</div>
-        <div>[ USER: MISTR ]</div>
+        <div style="font-size: 0.7em; color: #0a0;">[ SYSTEM ONLINE - MISTR LOGGED IN ]</div>
         <hr style="border-color: #0f0;">
-        <div id="output">Čekám na instrukce...</div>
-        <div>> <input type="text" id="commandInput" placeholder="Zadej příkaz..." autofocus></div>
+        <div id="output">Čekám na příkaz (zkus 'hello', 'vtip' nebo 'cas')...</div>
+        <div class="input-line">
+            <span class="prompt">></span>
+            <input type="text" id="commandInput" autofocus autocomplete="off">
+        </div>
     </div>
 
     <script>
-                input.addEventListener('keypress', function (e) {
+        // Funkce pro hodiny
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toLocaleTimeString();
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Logika terminálu
+        const input = document.getElementById('commandInput');
+        const output = document.getElementById('output');
+
+        input.addEventListener('keydown', function (e) {
             if (e.key === 'Enter') {
                 const cmd = input.value.toLowerCase().trim();
                 let response = "";
 
                 if (cmd === 'hello' || cmd === 'ahoj') {
-                    response = "Zdravím. Systém je plně funkční.";
-                } else if (cmd === 'time' || cmd === 'cas') {
-                    const now = new Date();
-                    response = "Aktuální čas systému: " + now.toLocaleTimeString();
+                    response = "Zdravím, Mistře. Systém je připraven k akci.";
+                } else if (cmd === 'cas' || cmd === 'time') {
+                    response = "Aktuální čas: " + new Date().toLocaleTimeString();
                 } else if (cmd === 'vtip') {
                     const vtipy = [
-                        "Proč se programátoři neradi opalují? Protože mají strach z bugů.",
-                        "Hardware je to, do čeho můžete kopnout, když nefunguje software.",
-                        "Existuje 10 druhů lidí: ti, kteří rozumí dvojkové soustavě, a ti, kteří ne."
+                        "Proč programátoři preferují tmavý režim? Protože světlo přitahuje bugy.",
+                        "Hardware je to, do čeho můžeš kopnout. Software je to, co můžeš jen proklínat.",
+                        "Uživatel: 'Můj počítač nefunguje.' IT: 'A zkusil jste ho vypnout a zapnout?'"
                     ];
                     response = vtipy[Math.floor(Math.random() * vtipy.length)];
+                } else if (cmd === 'status') {
+                    response = "CPU: 12% | RAM: Stabilní | Johnny: Vždy ve střehu.";
                 } else if (cmd === 'clear') {
-                    output.innerText = "Čekám na instrukce...";
+                    output.innerText = "Terminál vyčištěn...";
                     input.value = '';
                     return;
-                } else if (cmd === 'status') {
-                    response = "CPU: Stabilní | Jádro: Online | Připojení: Šifrováno";
+                } else if (cmd === "") {
+                    return;
                 } else {
-                    response = "Příkaz '" + cmd + "' nebyl rozpoznán v databázi.";
+                    response = "Příkaz '" + cmd + "' neznám. Zkus 'hello'.";
                 }
 
                 output.innerText = response;
-                input.value = '';
+                input.value = ''; // Vymaže řádek po odeslání
             }
         });
+
+        // Udržuje focus na inputu i po kliknutí jinam
+        document.body.addEventListener('click', () => input.focus());
     </script>
 </body>
-</ht
+</html>
