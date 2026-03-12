@@ -3,47 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Johnny System v3.0 - Memory</title>
+    <title>Johnny System v5.1 - Cyber Master</title>
     <style>
-        body {
+        /* Celkové rozvržení */
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
             background-color: #000;
-            color: #0f0;
             font-family: 'Courier New', Courier, monospace;
+            overflow: hidden;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
-            margin: 0;
-            overflow: hidden;
         }
+
+        /* Video na pozadí */
+        #bg-video {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            z-index: -1;
+            transform: translate(-50%, -50%);
+            filter: brightness(0.4) contrast(1.2) saturate(1.2);
+            object-fit: cover;
+        }
+
+        /* Terminál s efektem skla */
         #terminal {
+            position: relative;
+            z-index: 10;
             border: 2px solid #0f0;
-            padding: 20px;
-            background: rgba(0, 20, 0, 0.9);
-            box-shadow: 0 0 20px #0f0;
-            width: 90%;
-            max-width: 500px;
+            padding: 25px;
+            background: rgba(0, 15, 0, 0.7);
+            box-shadow: 0 0 30px #0f0, inset 0 0 15px rgba(0, 255, 0, 0.2);
+            width: 85%;
+            max-width: 550px;
+            color: #0f0;
+            backdrop-filter: blur(8px);
+            border-radius: 10px;
         }
-        #clock { font-size: 1.8em; margin-bottom: 10px; text-align: center; }
-        #output { height: 120px; overflow-y: auto; margin-bottom: 10px; border-bottom: 1px solid #030; }
-        .input-line { display: flex; }
-        .prompt { margin-right: 10px; }
+
+        /* Hlavička a hodiny */
+        #header {
+            text-align: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #0f0;
+            padding-bottom: 10px;
+        }
+
+        #clock {
+            font-size: 2em;
+            font-weight: bold;
+            text-shadow: 0 0 10px #0f0;
+        }
+
+        #status-line {
+            font-size: 0.75em;
+            color: #0a0;
+            margin-top: 5px;
+            letter-spacing: 2px;
+        }
+
+        /* Výstup a vstup */
+        #output {
+            height: 140px;
+            overflow-y: auto;
+            margin: 15px 0;
+            line-height: 1.4;
+            font-size: 0.95em;
+        }
+
+        .input-line {
+            display: flex;
+            align-items: center;
+            background: rgba(0, 40, 0, 0.3);
+            padding: 5px 10px;
+            border-radius: 3px;
+        }
+
+        .prompt {
+            margin-right: 10px;
+            font-weight: bold;
+            color: #0f0;
+        }
+
         input {
-            background: transparent; border: none; color: #0f0;
-            font-family: inherit; font-size: 1em; outline: none; width: 100%;
+            background: transparent;
+            border: none;
+            color: #0f0;
+            font-family: inherit;
+            font-size: 1.1em;
+            outline: none;
+            width: 100%;
         }
+
+        /* Scrollbar */
+        #output::-webkit-scrollbar { width: 5px; }
+        #output::-webkit-scrollbar-thumb { background: #0f0; }
     </style>
 </head>
 <body>
 
+    <video autoplay muted loop playsinline id="bg-video">
+        <source src="robot.mp4" type="video/mp4">
+        <source src="https://raw.githubusercontent.com/Jorgomet/ASISTENT-JOHNNY/main/robot.mp4" type="video/mp4">
+    </video>
+
     <div id="terminal">
-        <div id="clock">00:00:00</div>
-        <div id="user-status" style="font-size: 0.7em; color: #0a0;">[ SYSTÉM INICIALIZOVÁN ]</div>
-        <hr style="border-color: #0f0;">
-        <div id="output">Inicializace paměti...</div>
+        <div id="header">
+            <div id="clock">00:00:00</div>
+            <div id="status-line">[ SYSTÉM JOHNNY AKTIVNÍ ]</div>
+        </div>
+        
+        <div id="output">Inicializace neurální sítě...</div>
+        
         <div class="input-line">
-            <span class="prompt">></span>
+            <span class="prompt">master@johnny:~$</span>
             <input type="text" id="commandInput" autofocus autocomplete="off">
         </div>
     </div>
@@ -51,9 +132,9 @@
     <script>
         const input = document.getElementById('commandInput');
         const output = document.getElementById('output');
-        const userStatus = document.getElementById('user-status');
+        const statusLine = document.getElementById('status-line');
 
-        // Funkce pro hodiny
+        // Hodiny
         function updateClock() {
             const now = new Date();
             document.getElementById('clock').innerText = now.toLocaleTimeString();
@@ -61,18 +142,19 @@
         setInterval(updateClock, 1000);
         updateClock();
 
-        // NAČTENÍ PAMĚTI (localStorage)
-        function checkMemory() {
-            const savedName = localStorage.getItem('johnny_username');
-            if (savedName) {
-                userStatus.innerText = "[ PŘIHLÁŠEN: " + savedName.toUpperCase() + " ]";
-                output.innerText = "Vítejte zpět, " + savedName + ". Systém je připraven.";
+        // Načtení identity
+        function loadProfile() {
+            const name = localStorage.getItem('johnny_username');
+            if (name) {
+                statusLine.innerText = "[ AUTORIZOVÁN: " + name.toUpperCase() + " ]";
+                output.innerText = "Vítejte zpět, Mistře " + name + ". Čekám na vaše pokyny.";
             } else {
-                output.innerText = "Vítejte. Jak vás mám oslovovat? (Napište: jmenuji se [vaše jméno])";
+                output.innerText = "Systém nikoho nerozpoznává. Představte se: jmenuji se [vaše jméno]";
             }
         }
-        checkMemory();
+        loadProfile();
 
+        // Ovládání terminálu
         input.addEventListener('keydown', function (e) {
             if (e.key === 'Enter') {
                 const rawCmd = input.value.trim();
@@ -82,40 +164,44 @@
                 if (cmd.startsWith('jmenuji se ')) {
                     const name = rawCmd.split(' ').slice(2).join(' ');
                     localStorage.setItem('johnny_username', name);
-                    userStatus.innerText = "[ PŘIHLÁŠEN: " + name.toUpperCase() + " ]";
-                    response = "Rozumím. Budu si pamatovat, že jste " + name + ".";
+                    statusLine.innerText = "[ AUTORIZOVÁN: " + name.toUpperCase() + " ]";
+                    response = "Přístup udělen. Zdravím vás, " + name + ".";
                 } else if (cmd === 'hello' || cmd === 'ahoj') {
                     const name = localStorage.getItem('johnny_username') || "Mistře";
-                    response = "Zdravím vás, " + name + ". Všechny systémy běží na 100%.";
-                } else if (cmd === 'kdo jsem') {
-                    const name = localStorage.getItem('johnny_username');
-                    response = name ? "Jste " + name + ". Moje biometrická data nelžou." : "Zatím vás neznám. Představte se příkazem 'jmenuji se ...'.";
-                } else if (cmd === 'zapomen') {
-                    localStorage.removeItem('johnny_username');
-                    userStatus.innerText = "[ SYSTÉM RESETOVÁN ]";
-                    response = "Paměť vymazána. Kdo jste?";
-                } else if (cmd === 'cas') {
-                    response = "Aktuální čas: " + new Date().toLocaleTimeString();
+                    response = "Spojení navázáno. Jak vám mohu dnes pomoci, " + name + "?";
+                } else if (cmd === 'status') {
+                    response = "Procesor: 98% | Teplota: Optimální | Robot: Připojen | Paměť: Zabezpečená";
                 } else if (cmd === 'vtip') {
                     const vtipy = [
                         "Proč programátoři preferují tmavý režim? Protože světlo přitahuje bugy.",
                         "Hardware je to, do čeho můžeš kopnout. Software je to, co můžeš jen proklínat."
                     ];
                     response = vtipy[Math.floor(Math.random() * vtipy.length)];
+                } else if (cmd === 'zapomen') {
+                    localStorage.removeItem('johnny_username');
+                    statusLine.innerText = "[ ANONYMNÍ PŘÍSTUP ]";
+                    response = "Paměťové registry vymazány. Kdo jste?";
                 } else if (cmd === 'clear') {
-                    output.innerText = "Terminál vyčištěn...";
+                    output.innerText = "Konzole vyčištěna...";
                     input.value = '';
                     return;
                 } else {
-                    response = "Příkaz '" + cmd + "' neznám. Pro uložení jména zadej: jmenuji se [jméno]";
+                    response = "Neznámý příkaz: '" + cmd + "'. Zkuste: hello, status, vtip, zapomen.";
                 }
 
-                output.innerText = response;
+                // Výpis do terminálu
+                const log = document.createElement('div');
+                log.style.padding = "2px 0";
+                log.innerHTML = `<span style="color: #0f0;">></span> ` + response;
+                output.appendChild(log);
+                output.scrollTop = output.scrollHeight;
                 input.value = '';
             }
         });
 
+        // Autofokus
         document.body.addEventListener('click', () => input.focus());
     </script>
 </body>
 </html>
+
