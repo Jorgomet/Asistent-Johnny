@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Johnny System v7.9 - Gemini Memory</title>
+    <title>Johnny System v8.0</title>
     <style>
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
@@ -13,12 +13,11 @@
             display: flex; align-items: center; justify-content: center;
         }
 
-        /* POZADÍ - ROBOT VPRAVO */
         #bg-image {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
-            background-image: url('robot.jpg'); background-size: cover; background-position: center right;
+            background-image: url('robot.jpg'); 
+            background-size: cover; background-position: center right;
             filter: brightness(0.4) contrast(1.1);
-            transition: all 0.5s ease;
         }
 
         .scanlines {
@@ -27,7 +26,6 @@
             background-size: 100% 3px; z-index: 10; pointer-events: none; opacity: 0.3;
         }
 
-        /* TERMINÁL VLEVO */
         #terminal {
             position: relative; z-index: 20; border: 1px solid #0f0; padding: 20px;
             background: rgba(0, 15, 0, 0.85); box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
@@ -35,15 +33,14 @@
             border-radius: 5px; margin-right: auto; margin-left: 5%;
         }
 
-        #clock { font-size: 1.8em; font-weight: bold; text-align: center; margin-bottom: 5px; text-shadow: 0 0 10px #0f0; }
-        #storage-info { font-size: 0.7em; text-align: center; margin-bottom: 10px; color: #0a0; }
-        #output { height: 220px; overflow-y: auto; margin: 10px 0; font-size: 0.9em; line-height: 1.4; border-bottom: 1px solid #030; }
-        .input-line { display: flex; align-items: center; padding-top: 5px; }
+        #clock { font-size: 1.8em; font-weight: bold; text-align: center; margin-bottom: 5px; }
+        #storage-bar { font-size: 0.7em; text-align: center; margin-bottom: 10px; color: #0a0; border-bottom: 1px solid #030; padding-bottom: 5px; }
+        #output { height: 220px; overflow-y: auto; margin: 10px 0; font-size: 0.9em; line-height: 1.4; }
+        .input-line { display: flex; align-items: center; padding-top: 5px; border-top: 1px solid #030; }
         input { background: transparent; border: none; color: #0f0; outline: none; width: 100%; font-family: inherit; font-size: 1.1em; }
 
         .red-alert #terminal { border-color: #f00; box-shadow: 0 0 25px #f00; color: #f00; }
         .red-alert #bg-image { filter: brightness(0.3) sepia(1) hue-rotate(-50deg) saturate(3); }
-        .red-alert #clock { color: #f00; }
     </style>
 </head>
 <body id="main-body">
@@ -53,11 +50,11 @@
 
     <div id="terminal">
         <div id="clock">00:00:00</div>
-        <div id="storage-info">SYNCHRONIZACE PAMĚTI...</div>
+        <div id="storage-bar">NEURAL_STORAGE: OFFLINE</div>
         <div id="output">
-            [GEMINI CORE v7.9]<br>
-            Všechny systémy připraveny.<br>
-            Čekám na vaši aktivaci...
+            [JOHNNY OS v8.0]<br>
+            SYNTH_VOICE: INITIALIZING...<br>
+            Klikněte kamkoliv pro probuzení systému.
         </div>
         <div class="input-line">
             <span style="margin-right:10px;">></span>
@@ -69,59 +66,60 @@
         const input = document.getElementById('commandInput');
         const output = document.getElementById('output');
         const body = document.getElementById('main-body');
-        const storageInfo = document.getElementById('storage-info');
+        const storageBar = document.getElementById('storage-bar');
         let audioActive = false;
-        let voices = [];
+        let selectedVoice = null;
 
-        // Načtení hlasů
-        const loadVoices = () => {
-            voices = window.speechSynthesis.getVoices();
-        };
-        window.speechSynthesis.onvoiceschanged = loadVoices;
-        loadVoices();
+        // --- HLASOVÁ REKALIBRACE ---
+        function initVoices() {
+            const voices = window.speechSynthesis.getVoices();
+            // Hledáme český hlas, prioritně Google nebo systémový
+            selectedVoice = voices.find(v => v.lang.includes('cs-CZ')) || voices.find(v => v.lang.includes('cs')) || voices[0];
+            if (selectedVoice) {
+                console.log("Hlas vybrán: " + selectedVoice.name);
+            }
+        }
+        window.speechSynthesis.onvoiceschanged = initVoices;
+        initVoices();
 
+        function speak(text) {
+            if (!window.speechSynthesis) return;
+            window.speechSynthesis.cancel();
+            
+            const utter = new SpeechSynthesisUtterance(text.replace(/<br>/g, ' '));
+            utter.voice = selectedVoice;
+            utter.lang = 'cs-CZ';
+            utter.pitch = 1.0; // Plynulý, neutrální robotický tón
+            utter.rate = 1.0;  // Standardní rychlost
+            window.speechSynthesis.speak(utter);
+        }
+
+        // --- HODINY ---
         setInterval(() => {
             document.getElementById('clock').innerText = new Date().toLocaleTimeString();
         }, 1000);
 
-        // Hlasový modul (Gemini styl)
-        function speak(text) {
-            if (!window.speechSynthesis) return;
-            window.speechSynthesis.cancel();
-            const cleanText = text.replace(/<br>/g, ' ');
-            const utter = new SpeechSynthesisUtterance(cleanText);
-            utter.lang = 'cs-CZ';
-
-            // Hledání nejlepšího ženského hlasu
-            const bestVoice = voices.find(v => v.lang.includes('cs') && v.name.includes('Google')) || 
-                               voices.find(v => v.lang.includes('cs')) || voices[0];
-            if (bestVoice) utter.voice = bestVoice;
-
-            utter.pitch = 1.1; // Přátelský tón
-            utter.rate = 0.95; // Klidná řeč
-            window.speechSynthesis.speak(utter);
+        // --- PAMĚŤOVÝ MODUL ---
+        function updateStorage() {
+            const db = JSON.parse(localStorage.getItem('johnny_mem')) || [];
+            storageBar.innerText = `NEURAL_STORAGE: ${db.length} ZÁZNAMŮ ACTIVE`;
+            return db.length;
         }
 
-        // Kontrola úložiště
-        function updateStorageInfo() {
-            const data = JSON.parse(localStorage.getItem('johnny_db')) || [];
-            storageInfo.innerHTML = `● STORAGE: ${data.length} ZÁZNAMŮ`;
-            return data.length;
-        }
-
-        const activate = () => {
+        // --- AKTIVACE ---
+        const wakeUp = () => {
             if (!audioActive) {
                 audioActive = true;
-                const count = updateStorageInfo();
-                const msg = `Vítejte zpět, Mistře. V paměti mám ${count} vašich poznámek. Jsem připravena.`;
+                const count = updateStorage();
+                const msg = `Vítejte zpět, Mistře. Systém je online a paměť obsahuje ${count} záznamů. Jaké jsou vaše rozkazy?`;
                 addLog(msg);
                 speak(msg);
             }
             input.focus();
         };
 
-        document.body.addEventListener('click', activate);
-        document.body.addEventListener('touchstart', activate);
+        document.body.addEventListener('click', wakeUp);
+        document.body.addEventListener('touchstart', wakeUp);
 
         function addLog(text) {
             const p = document.createElement('div');
@@ -130,46 +128,44 @@
             output.scrollTop = output.scrollHeight;
         }
 
+        // --- PŘÍKAZY ---
         input.addEventListener('keydown', function (e) {
             if (e.key === 'Enter') {
-                const rawVal = input.value.trim();
-                const cmd = rawVal.toLowerCase();
-                let response = "";
+                const raw = input.value.trim();
+                const cmd = raw.toLowerCase();
+                let res = "";
 
-                if (cmd === 'hello' || cmd === 'ahoj') {
-                    response = "Ráda vás slyším, Mistře. Doufám, že máte příjemný den.";
-                }
-                else if (cmd.startsWith('zapis ')) {
-                    const note = rawVal.substring(6);
-                    let db = JSON.parse(localStorage.getItem('johnny_db')) || [];
-                    db.push({ msg: note, date: new Date().toLocaleString() });
-                    localStorage.setItem('johnny_db', JSON.stringify(db));
-                    updateStorageInfo();
-                    response = "Zápis byl bezpečně uložen do mé paměti.";
+                if (cmd.startsWith('zapis ')) {
+                    const note = raw.substring(6);
+                    let db = JSON.parse(localStorage.getItem('johnny_mem')) || [];
+                    db.push({ text: note, time: new Date().toLocaleString() });
+                    localStorage.setItem('johnny_mem', JSON.stringify(db));
+                    updateStorage();
+                    res = "Zápis byl uložen do mé dlouhodobé paměti.";
                 }
                 else if (cmd === 'denik') {
-                    let db = JSON.parse(localStorage.getItem('johnny_db')) || [];
-                    if (db.length === 0) response = "Váš deník je zatím prázdný.";
+                    let db = JSON.parse(localStorage.getItem('johnny_mem')) || [];
+                    if (db.length === 0) res = "Zatím si nic nepamatuji.";
                     else {
-                        response = "Zde jsou vaše záznamy:<br>";
-                        db.forEach((item, i) => { response += `${i+1}. ${item.msg}<br>`; });
+                        res = "Zde jsou vaše záznamy:<br>";
+                        db.forEach((item, i) => { res += `${i+1}. ${item.text}<br>`; });
                     }
                 }
                 else if (cmd === 'smaz denik') {
-                    localStorage.removeItem('johnny_db');
-                    updateStorageInfo();
-                    response = "Deník byl vymazán. Začínáme znovu.";
+                    localStorage.removeItem('johnny_mem');
+                    updateStorage();
+                    res = "Paměť byla kompletně vymazána.";
                 }
                 else if (cmd === 'status') {
-                    response = "Všechny systémy pracují v optimálním režimu. Hlas i paměť jsou aktivní.";
+                    res = "Všechny systémy nominální. Hlasový engine i storage jsou připraveny.";
                 }
                 else if (cmd === 'red alert') {
                     body.classList.add('red-alert');
-                    response = "Pozor! Bojový režim aktivován.";
+                    res = "Pozor! Bojový režim aktivován.";
                 }
                 else if (cmd === 'normal') {
                     body.classList.remove('red-alert');
-                    response = "Vše je v klidu. Návrat do normálu.";
+                    res = "Režim normalizován.";
                 }
                 else if (cmd === 'clear') {
                     output.innerHTML = "";
@@ -177,11 +173,11 @@
                     return;
                 }
                 else {
-                    response = "Omlouvám se, tento příkaz neznám. Zkuste: zapis [text], denik nebo status.";
+                    res = "Příkaz nebyl rozpoznán. Zkuste: zapis [text], denik nebo status.";
                 }
 
-                addLog(response);
-                speak(response);
+                addLog(res);
+                speak(res);
                 input.value = '';
             }
         });
