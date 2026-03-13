@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Johnny System v7.7</title>
+    <title>Johnny System v7.9 - Gemini Memory</title>
     <style>
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
@@ -13,49 +13,37 @@
             display: flex; align-items: center; justify-content: center;
         }
 
+        /* POZADÍ - ROBOT VPRAVO */
         #bg-image {
-            position: fixed; top: 0; left: 0;
-            width: 100%; height: 100%;
-            z-index: -1;
-            background-image: url('robot.jpg'); 
-            background-size: cover;
-            background-position: center right;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+            background-image: url('robot.jpg'); background-size: cover; background-position: center right;
             filter: brightness(0.4) contrast(1.1);
+            transition: all 0.5s ease;
         }
 
         .scanlines {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
-            background-size: 100% 3px;
-            z-index: 10; pointer-events: none;
-            opacity: 0.3;
+            background-size: 100% 3px; z-index: 10; pointer-events: none; opacity: 0.3;
         }
 
+        /* TERMINÁL VLEVO */
         #terminal {
-            position: relative; z-index: 20;
-            border: 1px solid #0f0; padding: 20px;
-            background: rgba(0, 15, 0, 0.85);
-            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
-            width: 85%; max-width: 450px;
-            color: #0f0; backdrop-filter: blur(8px);
-            border-radius: 5px;
-            margin-right: auto; margin-left: 5%;
+            position: relative; z-index: 20; border: 1px solid #0f0; padding: 20px;
+            background: rgba(0, 15, 0, 0.85); box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+            width: 85%; max-width: 450px; color: #0f0; backdrop-filter: blur(8px);
+            border-radius: 5px; margin-right: auto; margin-left: 5%;
         }
 
         #clock { font-size: 1.8em; font-weight: bold; text-align: center; margin-bottom: 5px; text-shadow: 0 0 10px #0f0; }
-        
-        /* Indikátor paměti */
-        #storage-status { font-size: 0.7em; text-align: center; margin-bottom: 10px; color: #0a0; }
-        .blink { animation: blinker 1.5s linear infinite; }
-        @keyframes blinker { 50% { opacity: 0; } }
-
-        #output { height: 200px; overflow-y: auto; margin: 10px 0; font-size: 0.9em; line-height: 1.4; border-bottom: 1px solid #030; }
+        #storage-info { font-size: 0.7em; text-align: center; margin-bottom: 10px; color: #0a0; }
+        #output { height: 220px; overflow-y: auto; margin: 10px 0; font-size: 0.9em; line-height: 1.4; border-bottom: 1px solid #030; }
         .input-line { display: flex; align-items: center; padding-top: 5px; }
         input { background: transparent; border: none; color: #0f0; outline: none; width: 100%; font-family: inherit; font-size: 1.1em; }
 
         .red-alert #terminal { border-color: #f00; box-shadow: 0 0 25px #f00; color: #f00; }
         .red-alert #bg-image { filter: brightness(0.3) sepia(1) hue-rotate(-50deg) saturate(3); }
-        .red-alert #storage-status { color: #f00; }
+        .red-alert #clock { color: #f00; }
     </style>
 </head>
 <body id="main-body">
@@ -65,13 +53,12 @@
 
     <div id="terminal">
         <div id="clock">00:00:00</div>
-        <div id="storage-status"><span class="blink">●</span> MEMORY_CHECK: WAITING...</div>
+        <div id="storage-info">SYNCHRONIZACE PAMĚTI...</div>
         <div id="output">
-            [JOHNNY OS v7.7]<br>
-            Audio: Ženský hlas připraven.<br>
-            Dotkněte se displeje...
+            [GEMINI CORE v7.9]<br>
+            Všechny systémy připraveny.<br>
+            Čekám na vaši aktivaci...
         </div>
-        
         <div class="input-line">
             <span style="margin-right:10px;">></span>
             <input type="text" id="commandInput" autofocus autocomplete="off">
@@ -82,46 +69,57 @@
         const input = document.getElementById('commandInput');
         const output = document.getElementById('output');
         const body = document.getElementById('main-body');
-        const storageStatus = document.getElementById('storage-status');
+        const storageInfo = document.getElementById('storage-info');
         let audioActive = false;
+        let voices = [];
+
+        // Načtení hlasů
+        const loadVoices = () => {
+            voices = window.speechSynthesis.getVoices();
+        };
+        window.speechSynthesis.onvoiceschanged = loadVoices;
+        loadVoices();
 
         setInterval(() => {
             document.getElementById('clock').innerText = new Date().toLocaleTimeString();
         }, 1000);
 
+        // Hlasový modul (Gemini styl)
         function speak(text) {
             if (!window.speechSynthesis) return;
             window.speechSynthesis.cancel();
             const cleanText = text.replace(/<br>/g, ' ');
             const utter = new SpeechSynthesisUtterance(cleanText);
             utter.lang = 'cs-CZ';
-            utter.pitch = 1.3;
-            utter.rate = 1.0;
+
+            // Hledání nejlepšího ženského hlasu
+            const bestVoice = voices.find(v => v.lang.includes('cs') && v.name.includes('Google')) || 
+                               voices.find(v => v.lang.includes('cs')) || voices[0];
+            if (bestVoice) utter.voice = bestVoice;
+
+            utter.pitch = 1.1; // Přátelský tón
+            utter.rate = 0.95; // Klidná řeč
             window.speechSynthesis.speak(utter);
         }
 
-        // --- KONTROLA PAMĚTI ---
-        function checkStorage() {
-            let denik = JSON.parse(localStorage.getItem('johnny_db')) || [];
-            if (denik.length > 0) {
-                storageStatus.innerHTML = `<span style="color: #0f0;">● STORAGE: ACTIVE (${denik.length} záznamů)</span>`;
-                return `V databázi jsem našla ${denik.length} vašich záznamů.`;
-            } else {
-                storageStatus.innerHTML = `● STORAGE: EMPTY`;
-                return "Vaše paměť je zatím čistá, Mistře.";
-            }
+        // Kontrola úložiště
+        function updateStorageInfo() {
+            const data = JSON.parse(localStorage.getItem('johnny_db')) || [];
+            storageInfo.innerHTML = `● STORAGE: ${data.length} ZÁZNAMŮ`;
+            return data.length;
         }
 
         const activate = () => {
             if (!audioActive) {
                 audioActive = true;
-                const memInfo = checkStorage();
-                const msg = "Vítejte zpět. " + memInfo;
+                const count = updateStorageInfo();
+                const msg = `Vítejte zpět, Mistře. V paměti mám ${count} vašich poznámek. Jsem připravena.`;
                 addLog(msg);
                 speak(msg);
             }
             input.focus();
         };
+
         document.body.addEventListener('click', activate);
         document.body.addEventListener('touchstart', activate);
 
@@ -139,31 +137,39 @@
                 let response = "";
 
                 if (cmd === 'hello' || cmd === 'ahoj') {
-                    response = "Ráda vás vidím, Mistře. Jsem plně k dispozici.";
-                } 
+                    response = "Ráda vás slyším, Mistře. Doufám, že máte příjemný den.";
+                }
                 else if (cmd.startsWith('zapis ')) {
-                    const text = rawVal.substring(6);
-                    let denik = JSON.parse(localStorage.getItem('johnny_db')) || [];
-                    denik.push({ msg: text, time: new Date().toLocaleString() });
-                    localStorage.setItem('johnny_db', JSON.stringify(denik));
-                    checkStorage(); // Aktualizace kontrolky
-                    response = "Uloženo. Teď si to budu pamatovat navždy.";
+                    const note = rawVal.substring(6);
+                    let db = JSON.parse(localStorage.getItem('johnny_db')) || [];
+                    db.push({ msg: note, date: new Date().toLocaleString() });
+                    localStorage.setItem('johnny_db', JSON.stringify(db));
+                    updateStorageInfo();
+                    response = "Zápis byl bezpečně uložen do mé paměti.";
                 }
                 else if (cmd === 'denik') {
-                    let denik = JSON.parse(localStorage.getItem('johnny_db')) || [];
-                    if (denik.length === 0) {
-                        response = "Deník je prázdný.";
-                    } else {
-                        response = "Vaše zápisky:<br>";
-                        denik.forEach((item, i) => {
-                            response += `${i+1}. ${item.msg}<br>`;
-                        });
+                    let db = JSON.parse(localStorage.getItem('johnny_db')) || [];
+                    if (db.length === 0) response = "Váš deník je zatím prázdný.";
+                    else {
+                        response = "Zde jsou vaše záznamy:<br>";
+                        db.forEach((item, i) => { response += `${i+1}. ${item.msg}<br>`; });
                     }
                 }
                 else if (cmd === 'smaz denik') {
                     localStorage.removeItem('johnny_db');
-                    checkStorage();
-                    response = "Paměť vymazána.";
+                    updateStorageInfo();
+                    response = "Deník byl vymazán. Začínáme znovu.";
+                }
+                else if (cmd === 'status') {
+                    response = "Všechny systémy pracují v optimálním režimu. Hlas i paměť jsou aktivní.";
+                }
+                else if (cmd === 'red alert') {
+                    body.classList.add('red-alert');
+                    response = "Pozor! Bojový režim aktivován.";
+                }
+                else if (cmd === 'normal') {
+                    body.classList.remove('red-alert');
+                    response = "Vše je v klidu. Návrat do normálu.";
                 }
                 else if (cmd === 'clear') {
                     output.innerHTML = "";
@@ -171,7 +177,7 @@
                     return;
                 }
                 else {
-                    response = "Zkuste: 'zapis [text]' nebo 'denik'.";
+                    response = "Omlouvám se, tento příkaz neznám. Zkuste: zapis [text], denik nebo status.";
                 }
 
                 addLog(response);
