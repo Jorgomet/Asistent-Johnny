@@ -70,69 +70,52 @@
         
         <div class="input-line">
             <span style="margin-right:10px;">></span>
-            <input type="text" id="commandInput" autofocus autocomplete="off">
+            <input type="text" id="commandInput" autofocus autocomplete="off">"
         </div>
     </div>
 
     <script>
-        const input = document.getElementById('commandInput');
-        const output = document.getElementById('output');
-        const body = document.getElementById('main-body');
-        let audioActive = false;
-
-        // Hodiny
-        setInterval(() => {
-            document.getElementById('clock').innerText = new Date().toLocaleTimeString();
-        }, 1000);
-
-        // Hlasový modul
-        function speak(text) {
-            if (!window.speechSynthesis) return;
-            window.speechSynthesis.cancel(); 
-            const utter = new SpeechSynthesisUtterance(text);
-            utter.lang = 'cs-CZ';
-            utter.pitch = 0.85;
-            utter.rate = 1.0;
-            window.speechSynthesis.speak(utter);
-        }
-
-        // Aktivace kliknutím
-        const initAudio = () => {
-            if (!audioActive) {
-                audioActive = true;
-                const msg = "Systém aktivován. Zdravím vás, Mistře.";
-                addLog(msg);
-                speak(msg);
-            }
-            input.focus();
-        };
-
-        document.body.addEventListener('click', initAudio);
-
-        function addLog(text) {
-            const p = document.createElement('div');
-            p.innerHTML = `<span style="color: #0a0;">[INFO]:</span> ${text}`;
-            output.appendChild(p);
-            output.scrollTop = output.scrollHeight;
-        }
-
-        input.addEventListener('keydown', function (e) {
+            input.addEventListener('keydown', function (e) {
             if (e.key === 'Enter') {
-                const cmd = input.value.trim().toLowerCase();
+                const rawCmd = input.value.trim();
+                const cmd = rawCmd.toLowerCase();
                 let response = "";
 
-                if (cmd === 'hello' || cmd === 'ahoj') {
-                    response = "Připojení stabilní. Jsem připraven k vašim službám.";
+                // --- NOVÉ PŘÍKAZY PRO PAMĚŤ ---
+
+                // 1. Uložení zápisku: zapis [text]
+                if (cmd.startsWith('zapis ')) {
+                    const poznamka = rawCmd.substring(6); // Vezme text za slovem "zapis "
+                    let denik = JSON.parse(localStorage.getItem('johnny_denik')) || [];
+                    denik.push({ text: poznamka, datum: new Date().toLocaleString() });
+                    localStorage.setItem('johnny_denik', JSON.stringify(denik));
+                    response = "Zápis uložen do neurální sítě, Mistře.";
+                }
+
+                // 2. Výpis zápisků: denik
+                else if (cmd === 'denik') {
+                    let denik = JSON.parse(localStorage.getItem('johnny_denik')) || [];
+                    if (denik.length === 0) {
+                        response = "Váš deník je zatím prázdný.";
+                    } else {
+                        response = "Vaše záznamy:<br>";
+                        denik.forEach((item, index) => {
+                            response += `${index + 1}. [${item.datum}] ${item.text}<br>`;
+                        });
+                    }
+                }
+
+                // 3. Smazání paměti: smaz denik
+                else if (cmd === 'smaz denik') {
+                    localStorage.removeItem('johnny_denik');
+                    response = "Všechny záznamy byly vymazány.";
+                }
+
+                // --- PŮVODNÍ PŘÍKAZY ---
+                else if (cmd === 'hello' || cmd === 'ahoj') {
+                    response = "Zdravím vás, Mistře. Jsem připraven.";
                 } else if (cmd === 'status') {
-                    response = "Všechny obvody v normě. Pozadí načteno z robot.jpg.";
-                } else if (cmd === 'red alert') {
-                    body.classList.add('red-alert');
-                    response = "POZOR! Bojový režim aktivován. Detekována hrozba!";
-                } else if (cmd === 'normal') {
-                    body.classList.remove('red-alert');
-                    response = "Návrat do standardního režimu.";
-                } else if (cmd === 'vtip') {
-                    response = "Víte, co dělá robot, když má hlad? Kouše do bajtů.";
+                    response = "Všechny systémy nominální. Paměť aktivní.";
                 } else if (cmd === 'clear') {
                     output.innerHTML = "";
                     input.value = '';
@@ -146,6 +129,7 @@
                 input.value = '';
             }
         });
+
     </script>
 </body>
 </html>
