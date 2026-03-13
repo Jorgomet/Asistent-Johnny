@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Johnny System v7.2</title>
+    <title>Johnny System v7.0</title>
     <style>
+        /* Základní nastavení */
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
             background-color: #000;
@@ -12,74 +13,105 @@
             overflow: hidden;
             display: flex; align-items: center; justify-content: center;
         }
+
+        /* POZADÍ - STATICKÝ OBRÁZEK */
         #bg-image {
             position: fixed; top: 0; left: 0;
             width: 100%; height: 100%;
             z-index: -1;
-            background-image: url('robot.jpg'); 
+            background-image: url('robot.jpg'); /* Johnny hledá tento soubor */
             background-size: cover;
-            background-position: center right;
+            background-position: center right; /* Robot bude vpravo */
             filter: brightness(0.5) contrast(1.1);
+            transition: all 0.5s ease;
         }
+
+        /* CRT Efekt skenovacích čar */
+        .scanlines {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%),
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
+            background-size: 100% 3px, 3px 100%;
+            z-index: 10; pointer-events: none;
+        }
+
+        /* TERMINÁL */
         #terminal {
             position: relative; z-index: 20;
-            border: 1px solid #0f0; padding: 25px;
+            border: 1px solid #0f0; padding: 20px;
             background: rgba(0, 15, 0, 0.85);
             box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
-            width: 85%; max-width: 420px;
+            width: 80%; max-width: 450px;
             color: #0f0; backdrop-filter: blur(8px);
-            border-radius: 5px;
-            margin-right: auto; margin-left: 5%;
+            border-radius: 4px;
+            margin-right: auto; margin-left: 5%; /* Terminál vlevo, robot vpravo */
         }
-        #clock { font-size: 2em; font-weight: bold; text-align: center; margin-bottom: 10px; }
-        #output { height: 180px; overflow-y: auto; margin: 15px 0; font-size: 0.9em; line-height: 1.5; }
+
+        #clock { font-size: 1.8em; font-weight: bold; text-align: center; margin-bottom: 10px; color: #0f0; }
+        #output { height: 180px; overflow-y: auto; margin: 10px 0; font-size: 0.85em; line-height: 1.4; }
         .input-line { display: flex; align-items: center; border-top: 1px solid #030; padding-top: 10px; }
-        input { background: transparent; border: none; color: #0f0; outline: none; width: 100%; font-family: inherit; font-size: 1.1em; }
+        input { background: transparent; border: none; color: #0f0; outline: none; width: 100%; font-family: inherit; font-size: 1em; }
+
+        /* Režim RED ALERT */
+        .red-alert #terminal { border-color: #f00; box-shadow: 0 0 25px #f00; color: #f00; }
+        .red-alert input { color: #f00; }
+        .red-alert #bg-image { filter: brightness(0.4) sepia(1) hue-rotate(-50deg) saturate(3); }
+        .red-alert #clock { color: #f00; }
     </style>
 </head>
 <body id="main-body">
+
+    <div class="scanlines"></div>
     <div id="bg-image"></div>
+
     <div id="terminal">
         <div id="clock">00:00:00</div>
-        <div id="output">JOHNNY OS v7.2 ONLINE...<br>Klikněte pro aktivaci audia.</div>
+        <div id="output">JOHNNY OS v7.0_CORE...<br>Status: Stabilní<br>Dotkněte se displeje pro audio.</div>
+        
         <div class="input-line">
             <span style="margin-right:10px;">></span>
             <input type="text" id="commandInput" autofocus autocomplete="off">
         </div>
     </div>
+
     <script>
         const input = document.getElementById('commandInput');
         const output = document.getElementById('output');
+        const body = document.getElementById('main-body');
         let audioActive = false;
 
+        // Hodiny
         setInterval(() => {
             document.getElementById('clock').innerText = new Date().toLocaleTimeString();
         }, 1000);
 
+        // Hlasový modul
         function speak(text) {
             if (!window.speechSynthesis) return;
             window.speechSynthesis.cancel(); 
             const utter = new SpeechSynthesisUtterance(text);
             utter.lang = 'cs-CZ';
-            utter.pitch = 0.8;
+            utter.pitch = 0.85;
+            utter.rate = 1.0;
             window.speechSynthesis.speak(utter);
         }
 
-        const activate = () => {
+        // Aktivace kliknutím
+        const initAudio = () => {
             if (!audioActive) {
                 audioActive = true;
-                const msg = "Systém oživen, Mistře.";
+                const msg = "Systém aktivován. Zdravím vás, Mistře.";
                 addLog(msg);
                 speak(msg);
             }
             input.focus();
         };
 
-        document.body.addEventListener('click', activate);
+        document.body.addEventListener('click', initAudio);
 
         function addLog(text) {
             const p = document.createElement('div');
-            p.innerHTML = `<span style="color: #0a0;">[LOG]:</span> ${text}`;
+            p.innerHTML = `<span style="color: #0a0;">[INFO]:</span> ${text}`;
             output.appendChild(p);
             output.scrollTop = output.scrollHeight;
         }
@@ -87,7 +119,28 @@
         input.addEventListener('keydown', function (e) {
             if (e.key === 'Enter') {
                 const cmd = input.value.trim().toLowerCase();
-                let response = (cmd === 'hello') ? "Zdravím vás, Mistře." : "Příkaz neznám.";
+                let response = "";
+
+                if (cmd === 'hello' || cmd === 'ahoj') {
+                    response = "Připojení stabilní. Jsem připraven k vašim službám.";
+                } else if (cmd === 'status') {
+                    response = "Všechny obvody v normě. Pozadí načteno z robot.jpg.";
+                } else if (cmd === 'red alert') {
+                    body.classList.add('red-alert');
+                    response = "POZOR! Bojový režim aktivován. Detekována hrozba!";
+                } else if (cmd === 'normal') {
+                    body.classList.remove('red-alert');
+                    response = "Návrat do standardního režimu.";
+                } else if (cmd === 'vtip') {
+                    response = "Víte, co dělá robot, když má hlad? Kouše do bajtů.";
+                } else if (cmd === 'clear') {
+                    output.innerHTML = "";
+                    input.value = '';
+                    return;
+                } else {
+                    response = "Příkaz '" + cmd + "' neznám.";
+                }
+
                 addLog(response);
                 speak(response);
                 input.value = '';
@@ -96,5 +149,3 @@
     </script>
 </body>
 </html>
-
-
